@@ -44,7 +44,9 @@ import org.springframework.validation.Validator;
  * @see org.springframework.kafka.annotation.KafkaListenerConfigurer
  */
 public class KafkaListenerEndpointRegistrar implements BeanFactoryAware, InitializingBean {
-
+	/**
+	 *  保存注册的KafkaListenerEndpoint列表
+	 */
 	private final List<KafkaListenerEndpointDescriptor> endpointDescriptors = new ArrayList<>();
 
 	private List<HandlerMethodArgumentResolver> customMethodArgumentResolvers = new ArrayList<>();

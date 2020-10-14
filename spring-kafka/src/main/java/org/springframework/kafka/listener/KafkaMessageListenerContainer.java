@@ -1140,6 +1140,9 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 			if (records != null && records.count() > 0) {
 				savePositionsIfNeeded(records);
 				notIdle();
+				/**
+				 *  回调@KafkaListener注解方法
+				 */
 				invokeListener(records);
 			}
 			else {
@@ -1589,6 +1592,11 @@ public class KafkaMessageListenerContainer<K, V> // NOSONAR line count
 			}
 		}
 
+		/**
+		 *
+		 * @param  records  将ConsumerRecords类型转换为ConsumerRecord 列表
+		 * @return
+		 */
 		private List<ConsumerRecord<K, V>> createRecordList(final ConsumerRecords<K, V> records) {
 			Iterator<ConsumerRecord<K, V>> iterator = records.iterator();
 			List<ConsumerRecord<K, V>> list = new LinkedList<>();

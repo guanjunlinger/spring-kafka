@@ -281,14 +281,23 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 	public Object postProcessAfterInitialization(final Object bean, final String beanName) throws BeansException {
 		if (!this.nonAnnotatedClasses.contains(bean.getClass())) {
 			Class<?> targetClass = AopUtils.getTargetClass(bean);
+			/**
+			 *  提取Class级别的@KafkaListener注解
+			 */
 			Collection<KafkaListener> classLevelListeners = findListenerAnnotations(targetClass);
 			final boolean hasClassLevelListeners = classLevelListeners.size() > 0;
 			final List<Method> multiMethods = new ArrayList<>();
+			/**
+			 * 提取@KafkaListener注解的所有Method
+			 */
 			Map<Method, Set<KafkaListener>> annotatedMethods = MethodIntrospector.selectMethods(targetClass,
 					(MethodIntrospector.MetadataLookup<Set<KafkaListener>>) method -> {
 						Set<KafkaListener> listenerMethods = findListenerAnnotations(method);
 						return (!listenerMethods.isEmpty() ? listenerMethods : null);
 					});
+			/**
+			 * 提取@KafkaHandler注解的Method
+			 */
 			if (hasClassLevelListeners) {
 				Set<Method> methodsWithHandler = MethodIntrospector.selectMethods(targetClass,
 						(ReflectionUtils.MethodFilter) method ->
@@ -310,6 +319,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 				this.logger.debug(() -> annotatedMethods.size() + " @KafkaListener methods processed on bean '"
 							+ beanName + "': " + annotatedMethods);
 			}
+			/**
+			 *  将@KafkaHandler注解的Method绑定到类级别的@KafkaListener注解
+			 */
 			if (hasClassLevelListeners) {
 				processMultiMethodListeners(classLevelListeners, multiMethods, bean, beanName);
 			}
@@ -422,10 +434,19 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		}
 		endpoint.setBean(bean);
 		endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
+		/**
+		 *    MethodKafkaListenerEndpoint id生成策略
+		 */
 		endpoint.setId(getEndpointId(kafkaListener));
+		/**
+		 *      GroupId默认为Endpoint id
+		 */
 		endpoint.setGroupId(getEndpointGroupId(kafkaListener, endpoint.getId()));
 		endpoint.setTopicPartitions(resolveTopicPartitions(kafkaListener));
 		endpoint.setTopics(resolveTopics(kafkaListener));
+		/**
+		 *   监听正则表达式Topic
+		 */
 		endpoint.setTopicPattern(resolvePattern(kafkaListener));
 		endpoint.setClientIdPrefix(resolveExpressionAsString(kafkaListener.clientIdPrefix(), "clientIdPrefix"));
 		String group = kafkaListener.containerGroup();
@@ -443,6 +464,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		if (StringUtils.hasText(autoStartup)) {
 			endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup, "autoStartup"));
 		}
+		/**
+		 *  重载Consumer 属性
+		 */
 		resolveKafkaProperties(endpoint, kafkaListener.properties());
 		endpoint.setSplitIterables(kafkaListener.splitIterables());
 
@@ -798,6 +822,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 		private final DefaultFormattingConversionService defaultFormattingConversionService =
 				new DefaultFormattingConversionService();
 
+		/**
+		 *  工厂模式,产生InvocableHandlerMethod 对象实例
+		 */
 		private MessageHandlerMethodFactory handlerMethodFactory;
 
 		public void setHandlerMethodFactory(MessageHandlerMethodFactory kafkaHandlerMethodFactory1) {
@@ -828,7 +855,9 @@ public class KafkaListenerAnnotationBeanPostProcessor<K, V>
 			defaultFactory.setConversionService(this.defaultFormattingConversionService);
 			GenericMessageConverter messageConverter = new GenericMessageConverter(this.defaultFormattingConversionService);
 			defaultFactory.setMessageConverter(messageConverter);
-
+			/**
+			 *   添加自定义的HandlerMethodArgumentResolver
+			 */
 			List<HandlerMethodArgumentResolver> customArgumentsResolver =
 					new ArrayList<>(KafkaListenerAnnotationBeanPostProcessor.this.registrar.getCustomMethodArgumentResolvers());
 			// Has to be at the end - look at PayloadMethodArgumentResolver documentation
