@@ -150,7 +150,13 @@ public class MethodKafkaListenerEndpoint<K, V> extends AbstractKafkaListenerEndp
 
 		Assert.state(this.messageHandlerMethodFactory != null,
 				"Could not create message listener - MessageHandlerMethodFactory not set");
+		/**
+		 *   将MethodKafkaListenerEndpoint 实例适配到BatchAcknowledgingConsumerAwareMessageListener接口
+		 */
 		MessagingMessageListenerAdapter<K, V> messageListener = createMessageListenerInstance(messageConverter);
+		/**
+		 * @KafkaListener 注解处理器封装成HandlerAdapter实例
+		 */
 		messageListener.setHandlerMethod(configureListenerAdapter(messageListener));
 		JavaUtils.INSTANCE
 			.acceptIfNotNull(getReplyTopic(), replyTopic -> {
@@ -182,7 +188,7 @@ public class MethodKafkaListenerEndpoint<K, V> extends AbstractKafkaListenerEndp
 	protected MessagingMessageListenerAdapter<K, V> createMessageListenerInstance(MessageConverter messageConverter) {
 		MessagingMessageListenerAdapter<K, V> listener;
 		if (isBatchListener()) {
-			BatchMessagingMessageListenerAdapter<K, V> messageListener = new BatchMessagingMessageListenerAdapter<K, V>(
+			BatchMessagingMessageListenerAdapter<K, V> messageListener = new BatchMessagingMessageListenerAdapter<>(
 					this.bean, this.method, this.errorHandler);
 			if (getBatchToRecordAdapter() != null) {
 				messageListener.setBatchToRecordAdapter(getBatchToRecordAdapter());
@@ -193,7 +199,7 @@ public class MethodKafkaListenerEndpoint<K, V> extends AbstractKafkaListenerEndp
 			listener = messageListener;
 		}
 		else {
-			RecordMessagingMessageListenerAdapter<K, V> messageListener = new RecordMessagingMessageListenerAdapter<K, V>(
+			RecordMessagingMessageListenerAdapter<K, V> messageListener = new RecordMessagingMessageListenerAdapter<>(
 					this.bean, this.method, this.errorHandler);
 			if (messageConverter instanceof RecordMessageConverter) {
 				messageListener.setMessageConverter((RecordMessageConverter) messageConverter);
