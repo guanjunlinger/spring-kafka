@@ -53,7 +53,9 @@ import org.springframework.util.Assert;
  * @author Vladimir Tsanev
  */
 public class ConcurrentMessageListenerContainer<K, V> extends AbstractMessageListenerContainer<K, V> {
-
+	/**
+	 *  持有concurrency个KafkaMessageListenerContainer实例
+ 	 */
 	private final List<KafkaMessageListenerContainer<K, V>> containers = new ArrayList<>();
 
 	private int concurrency = 1;
