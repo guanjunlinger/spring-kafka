@@ -176,9 +176,6 @@ public class KafkaListenerEndpointRegistry implements DisposableBean, SmartLifec
 					"Another endpoint is already registered with id '" + id + "'");
 			MessageListenerContainer container = createListenerContainer(endpoint, factory);
 			this.listenerContainers.put(id, container);
-			/**
-			 *   特殊处理MessageListenerContainer Group
-			 */
 			if (StringUtils.hasText(endpoint.getGroup()) && this.applicationContext != null) {
 				List<MessageListenerContainer> containerGroup;
 				if (this.applicationContext.containsBean(endpoint.getGroup())) {
