@@ -132,6 +132,9 @@ public class DefaultKafkaProducerFactory<K, V> extends KafkaResourceFactory
 
 	private final List<Listener<K, V>> listeners = new ArrayList<>();
 
+	/**
+	 *   新建的Producer应用后处理器
+	 */
 	private final List<ProducerPostProcessor<K, V>> postProcessors = new ArrayList<>();
 
 	private Supplier<Serializer<K>> keySerializerSupplier;
@@ -644,6 +647,13 @@ public class DefaultKafkaProducerFactory<K, V> extends KafkaResourceFactory
 		}
 	}
 
+	/**
+	 *
+	 * @param prefix
+	 * @param suffix
+	 * @param remover   Producer关闭动作算子
+	 * @return
+	 */
 	private CloseSafeProducer<K, V> doCreateTxProducer(String prefix, String suffix,
 			BiPredicate<CloseSafeProducer<K, V>, Duration> remover) {
 
@@ -658,6 +668,9 @@ public class DefaultKafkaProducerFactory<K, V> extends KafkaResourceFactory
 		checkBootstrap(newProducerConfigs);
 		newProducer = createRawProducer(newProducerConfigs);
 		newProducer.initTransactions();
+		/**
+		 *  装饰器模式,
+		 */
 		CloseSafeProducer<K, V> closeSafeProducer =
 				new CloseSafeProducer<>(newProducer, remover, prefix, this.physicalCloseTimeout, this.beanName);
 		this.listeners.forEach(listener -> listener.producerAdded(closeSafeProducer.clientId, closeSafeProducer));
@@ -897,6 +910,11 @@ public class DefaultKafkaProducerFactory<K, V> extends KafkaResourceFactory
 			}
 		}
 
+		/**
+		 *
+		 * @param timeout    关闭生产者的超时时间
+		 * @param listeners  生产者关闭的监听器列表
+		 */
 		void closeDelegate(Duration timeout, List<Listener<K, V>> listeners) {
 			this.delegate.close(timeout == null ? this.closeTimeout : timeout);
 			listeners.forEach(listener -> listener.producerRemoved(this.clientId, this));

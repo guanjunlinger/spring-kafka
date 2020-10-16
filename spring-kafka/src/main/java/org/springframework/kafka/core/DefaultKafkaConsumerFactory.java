@@ -65,7 +65,6 @@ import org.springframework.util.StringUtils;
  *
  * @param <K> the key type.
  * @param <V> the value type.
- *
  * @author Gary Russell
  * @author Murali Reddy
  * @author Artem Bilan
@@ -77,9 +76,14 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 	private static final LogAccessor LOGGER = new LogAccessor(LogFactory.getLog(DefaultKafkaConsumerFactory.class));
 
 	private final Map<String, Object> configs;
-
+	/**
+	 *   观察者模式,监听消费者的创建和销毁
+	 */
 	private final List<Listener<K, V>> listeners = new ArrayList<>();
 
+	/**
+	 *  Consumer实例后处理器列表
+	 */
 	private final List<ConsumerPostProcessor<K, V>> postProcessors = new ArrayList<>();
 
 	private Supplier<Deserializer<K>> keyDeserializerSupplier;
@@ -91,6 +95,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Construct a factory with the provided configuration.
+	 *
 	 * @param configs the configuration.
 	 */
 	public DefaultKafkaConsumerFactory(Map<String, Object> configs) {
@@ -99,27 +104,29 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Construct a factory with the provided configuration and deserializers.
-	 * @param configs the configuration.
-	 * @param keyDeserializer the key {@link Deserializer}.
+	 *
+	 * @param configs           the configuration.
+	 * @param keyDeserializer   the key {@link Deserializer}.
 	 * @param valueDeserializer the value {@link Deserializer}.
 	 */
 	public DefaultKafkaConsumerFactory(Map<String, Object> configs,
-			@Nullable Deserializer<K> keyDeserializer,
-			@Nullable Deserializer<V> valueDeserializer) {
+									   @Nullable Deserializer<K> keyDeserializer,
+									   @Nullable Deserializer<V> valueDeserializer) {
 
 		this(configs, () -> keyDeserializer, () -> valueDeserializer);
 	}
 
 	/**
 	 * Construct a factory with the provided configuration and deserializer suppliers.
-	 * @param configs the configuration.
+	 *
+	 * @param configs                   the configuration.
 	 * @param keyDeserializerSupplier   the key {@link Deserializer} supplier function.
 	 * @param valueDeserializerSupplier the value {@link Deserializer} supplier function.
 	 * @since 2.3
 	 */
 	public DefaultKafkaConsumerFactory(Map<String, Object> configs,
-			@Nullable Supplier<Deserializer<K>> keyDeserializerSupplier,
-			@Nullable Supplier<Deserializer<V>> valueDeserializerSupplier) {
+									   @Nullable Supplier<Deserializer<K>> keyDeserializerSupplier,
+									   @Nullable Supplier<Deserializer<V>> valueDeserializerSupplier) {
 
 		this.configs = new HashMap<>(configs);
 		this.keyDeserializerSupplier = keyDeserializerSupplier == null ? () -> null : keyDeserializerSupplier;
@@ -133,6 +140,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Set the key deserializer.
+	 *
 	 * @param keyDeserializer the deserializer.
 	 */
 	public void setKeyDeserializer(@Nullable Deserializer<K> keyDeserializer) {
@@ -141,6 +149,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Set the value deserializer.
+	 *
 	 * @param valueDeserializer the valuee deserializer.
 	 */
 	public void setValueDeserializer(@Nullable Deserializer<V> valueDeserializer) {
@@ -166,6 +175,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Get the current list of listeners.
+	 *
 	 * @return the listeners.
 	 * @since 2.5
 	 */
@@ -181,6 +191,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Add a listener.
+	 *
 	 * @param listener the listener.
 	 * @since 2.5
 	 */
@@ -192,7 +203,8 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Add a listener at a specific index.
-	 * @param index the index (list position).
+	 *
+	 * @param index    the index (list position).
 	 * @param listener the listener.
 	 * @since 2.5
 	 */
@@ -201,8 +213,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 		Assert.notNull(listener, "'listener' cannot be null");
 		if (index >= this.listeners.size()) {
 			this.listeners.add(listener);
-		}
-		else {
+		} else {
 			this.listeners.add(index, listener);
 		}
 	}
@@ -220,6 +231,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Remove a listener.
+	 *
 	 * @param listener the listener.
 	 * @return true if removed.
 	 * @since 2.5
@@ -231,27 +243,27 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	@Override
 	public Consumer<K, V> createConsumer(@Nullable String groupId, @Nullable String clientIdPrefix,
-			@Nullable String clientIdSuffix) {
+										 @Nullable String clientIdSuffix) {
 
 		return createKafkaConsumer(groupId, clientIdPrefix, clientIdSuffix, null);
 	}
 
 	@Override
 	public Consumer<K, V> createConsumer(@Nullable String groupId, @Nullable String clientIdPrefix,
-			@Nullable final String clientIdSuffixArg, @Nullable Properties properties) {
+										 @Nullable final String clientIdSuffixArg, @Nullable Properties properties) {
 
 		return createKafkaConsumer(groupId, clientIdPrefix, clientIdSuffixArg, properties);
 	}
 
 	@Deprecated
 	protected Consumer<K, V> createKafkaConsumer(@Nullable String groupId, @Nullable String clientIdPrefix,
-			@Nullable String clientIdSuffixArg) {
+												 @Nullable String clientIdSuffixArg) {
 
 		return createKafkaConsumer(groupId, clientIdPrefix, clientIdSuffixArg, null);
 	}
 
 	protected Consumer<K, V> createKafkaConsumer(@Nullable String groupId, @Nullable String clientIdPrefix,
-			@Nullable String clientIdSuffixArg, @Nullable Properties properties) {
+												 @Nullable String clientIdSuffixArg, @Nullable Properties properties) {
 
 		boolean overrideClientIdPrefix = StringUtils.hasText(clientIdPrefix);
 		String clientIdSuffix = clientIdSuffixArg;
@@ -264,16 +276,15 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 				&& (properties == null || properties.stringPropertyNames().size() == 0)
 				&& !shouldModifyClientId) {
 			return createKafkaConsumer(new HashMap<>(this.configs));
-		}
-		else {
+		} else {
 			return createConsumerWithAdjustedProperties(groupId, clientIdPrefix, properties, overrideClientIdPrefix,
 					clientIdSuffix, shouldModifyClientId);
 		}
 	}
 
 	private Consumer<K, V> createConsumerWithAdjustedProperties(String groupId, String clientIdPrefix,
-			Properties properties, boolean overrideClientIdPrefix, String clientIdSuffix,
-			boolean shouldModifyClientId) {
+																Properties properties, boolean overrideClientIdPrefix, String clientIdSuffix,
+																boolean shouldModifyClientId) {
 
 		Map<String, Object> modifiedConfigs = new HashMap<>(this.configs);
 		if (groupId != null) {
@@ -331,8 +342,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 			String clientId;
 			if (metricIterator.hasNext()) {
 				clientId = metricIterator.next().tags().get("client-id");
-			}
-			else {
+			} else {
 				clientId = "unknown";
 			}
 			String id = this.beanName + "." + clientId;
@@ -349,6 +359,7 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * Create a Consumer.
+	 *
 	 * @param configProps the configuration properties.
 	 * @return the consumer.
 	 * @since 2.5
@@ -358,18 +369,22 @@ public class DefaultKafkaConsumerFactory<K, V> extends KafkaResourceFactory
 				this.valueDeserializerSupplier.get());
 	}
 
+	/**
+	 *
+	 * @param kafkaConsumer  原始的Consumer实例
+	 * @param id            工厂记录的consumerId
+	 * @return              AOP增强的Consumer实例
+	 */
 	@SuppressWarnings("unchecked")
 	private Consumer<K, V> createProxy(Consumer<K, V> kafkaConsumer, String id) {
 		ProxyFactory pf = new ProxyFactory(kafkaConsumer);
-		Advice advice = new MethodInterceptor() {
-
-			@Override
-			public Object invoke(MethodInvocation invocation) throws Throwable {
-				DefaultKafkaConsumerFactory.this.listeners.forEach(listener ->
-						listener.consumerRemoved(id, kafkaConsumer));
-				return invocation.proceed();
-			}
-
+		/**
+		 *    Consumer的close方法触发Listener.consumerRemoved回调
+		 */
+		MethodInterceptor advice = (invocation) -> {
+			DefaultKafkaConsumerFactory.this.listeners.forEach(listener ->
+					listener.consumerRemoved(id, kafkaConsumer));
+			return invocation.proceed();
 		};
 		NameMatchMethodPointcutAdvisor advisor = new NameMatchMethodPointcutAdvisor(advice);
 		advisor.addMethodName("close");
