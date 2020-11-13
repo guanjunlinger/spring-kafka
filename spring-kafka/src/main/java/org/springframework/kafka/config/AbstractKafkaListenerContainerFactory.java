@@ -350,8 +350,7 @@ public abstract class AbstractKafkaListenerContainerFactory<C extends AbstractMe
 		JavaUtils.INSTANCE
 				.acceptIfNotNull(endpoint.getId(), instance::setBeanName);
 		/**
-		 *   装配MessageListener调用链
-		 *   包括过滤和重试逻辑
+		 *   装配KafkaListenerEndpoint重要组件
 		 */
 		if (endpoint instanceof AbstractKafkaListenerEndpoint) {
 			configureEndpoint((AbstractKafkaListenerEndpoint<K, V>) endpoint);
